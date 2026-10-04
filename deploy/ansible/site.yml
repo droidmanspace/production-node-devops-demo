@@ -1,0 +1,29 @@
+- name: Deploy production Node API
+  hosts: app
+  become: true
+  vars:
+    app_dir: /opt/production-node-devops-demo
+  tasks:
+    - name: Install Docker prerequisites
+      ansible.builtin.apt:
+        name: [docker.io, docker-compose-plugin]
+        state: present
+        update_cache: true
+    - name: Create application directory
+      ansible.builtin.file:
+        path: "{{ app_dir }}"
+        state: directory
+        owner: root
+        mode: '0755'
+    - name: Copy compose file
+      ansible.builtin.copy:
+        src: ../../docker-compose.yml
+        dest: "{{ app_dir }}/docker-compose.yml"
+    - name: Copy nginx config
+      ansible.builtin.copy:
+        src: ../../nginx/default.conf
+        dest: "{{ app_dir }}/default.conf"
+    - name: Start application stack
+      community.docker.docker_compose_v2:
+        project_src: "{{ app_dir }}"
+        state: present
